@@ -1,0 +1,39 @@
+﻿<Window x:Class="AoWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AoWpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <TabControl Name="MainTabControl" HorizontalAlignment="Left" Height="357" Margin="10,52,0,0" VerticalAlignment="Top" Width="772" >
+            <TabItem Name="BaseTabItem">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Head"></TextBlock>
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <Grid Background="Yellow">
+                    </Grid>
+                </TabItem.Content>
+            </TabItem>
+
+            <TabItem>
+            </TabItem>
+
+        </TabControl>
+        <Button  HorizontalAlignment="Left" Margin="500,25,0,0" VerticalAlignment="Top" Click="Button_Click">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="AddTab" ></TextBlock>
+                    <TextBox Name="AddTabButtonText" Width="50"></TextBox>
+                </StackPanel>
+            </Button.Content>
+        </Button>
+    </Grid>
+    <Window.Resources>
+
+    </Window.Resources>
+</Window>
