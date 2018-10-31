@@ -29,6 +29,10 @@ namespace AoCli
         [Option(ShortName = "cp", LongName = "controlpoints", Description = "The path or url to pass control points.")]
         public string ControlPoints { get; set; }
 
+        // Affine, Conformal, EdgeSnap, Piecewise, Projective
+        [Option(ShortName = "samt", Description = "Spatial adjustment method type. Default option is Affine. <Affine|Conformal|EdgeSnap|Piecewise|Projective>")]
+        public SpatialAdjustMethodType SpatialAdjustMethodType { get; set; } = SpatialAdjustMethodType.Affine;
+
         [Option(ShortName = "f", Description = "The file to operate")]
         public string File { get; set; }
 
@@ -60,8 +64,6 @@ namespace AoCli
         /// <summary>
         /// 数据源图层名
         /// </summary>
-
-
         public void OnExecute()
         {
             switch (ActionArgument)
@@ -85,7 +87,7 @@ namespace AoCli
                         SpatialAdjust sa = null;
                         try
                         {
-                            sa = new SpatialAdjust(controlPointsFile: ControlPoints, controlPointsInputType: this.ControlPointsInputType);
+                            sa = new SpatialAdjust(controlPointsFile: ControlPoints, controlPointsInputType: ControlPointsInputType, spatialAdjustMethodType: SpatialAdjustMethodType);
                         }
                         catch (Exception ex)
                         {
@@ -97,6 +99,7 @@ namespace AoCli
                         }
                         var inFc = DataActions.GetFeatureClass(Datasource, DataSourceType, LayerName);
                         var outFc = DataActions.GetFeatureClass(OutDatasource, OutDatasourceType, OutLayerName);
+                        //Console.WriteLine($"将使用{ SpatialAdjust.transformMethodMap[sa.SpatialAdjustMethodType].Name} 偏移");
                         DataActions.CoverFeatureClassWithFeatureClass(inFc, outFc, sa);
                         break;
                     }

@@ -42,6 +42,7 @@ namespace AoCli.AoActions
             ((ITable)toFeatureClass).DeleteSearchedRows(null);
 
             Console.WriteLine($"{fromFeatureClass.FeatureCount(null)} 个要素待转换");
+            Console.WriteLine($"使用 {spatialAdjust.TransformationMethod.Name} 方法偏移");
             fromFeatureClass.Features().ToList().ForEach((feature) =>
             {
                 var createdFeature = toFeatureClass.CreateFeature();
@@ -49,13 +50,17 @@ namespace AoCli.AoActions
 
                 if (spatialAdjust != null)
                 {
+                    //Console.WriteLine($"使用{ SpatialAdjust.transformMethodMap[spatialAdjust.SpatialAdjustMethodType].Name}来Spatial Adjustment");
                     var targetSr = createdFeature.Shape.SpatialReference;
                     copy.Project(targetSr);
                     var fromSr = feature.Shape.SpatialReference;
                     Trace.WriteLine($"{fromSr.Name} -> {targetSr.Name}");
                     spatialAdjust.AdjustGeometry(copy);
                     //SpatialActions.Adjust(@"C:\OCNwork\东莞\dgcps.txt", ControlPointsInputType.File, copy);
-
+                }
+                else
+                {
+                    //Console.WriteLine($"不做Spatial Adjustmnent");
                 }
                 createdFeature.Shape = copy;
                 for (int i = 0; i < feature.Fields.FieldCount; i++)

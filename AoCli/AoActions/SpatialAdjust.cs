@@ -2,36 +2,114 @@
 using ESRI.ArcGIS.Geometry;
 using System;
 using System.Linq;
-using System.Collections;
 using System.Data;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using ESRI.ArcGIS.DataSourcesRaster;
+using System.Net;
 
 namespace AoCli
 {
     public class SpatialAdjust
     {
-        public SpatialAdjust(string controlPointsFile, ControlPointsInputType controlPointsInputType)
+        #region Constructors
+
+        public SpatialAdjust(string controlPointsFile, ControlPointsInputType controlPointsInputType, SpatialAdjustMethodType spatialAdjustMethodType)
         {
-            if (!File.Exists(controlPointsFile))
-            {
-                throw new FileNotFoundException("控制点文件没有找到");
-            }
-            this.ControlPointsFile = controlPointsFile;
+            ControlPointsFile = controlPointsFile;
             ControlPointsInputType = controlPointsInputType;
+            SpatialAdjustMethodType = spatialAdjustMethodType;
+            string txt = string.Empty;
+            switch (ControlPointsInputType)
+            {
+                case ControlPointsInputType.File:
+                    try
+                    {
+                        txt = File.ReadAllText(ControlPointsFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        //throw new FileNotFoundException();
+                    }
+                    break;
+                case ControlPointsInputType.Web:
+                    try
+                    {
+                        txt = new WebClient().DownloadString(ControlPointsFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        //throw;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if (String.IsNullOrEmpty(txt))
+            {
+                TransformationMethod = null;
+            }
+            else
+            {
+                var methodObject = transformMethodMap[SpatialAdjustMethodType]
+                    .GetConstructors()
+                    .Where(constructor => constructor.GetParameters().Length == 0)
+                    .FirstOrDefault()
+                    .Invoke(null);
+                TransformationMethod = (ITransformationMethodGEN)methodObject;
+                #region 定义控制点
+                var lines = txt.Split('\n').ToList();
+                if (String.IsNullOrWhiteSpace(lines.Last()) || String.IsNullOrEmpty(lines.Last()))
+                {
+                    lines.RemoveAt(lines.Count - 1);
+                }
+                List<IPoint> fromPoints = new List<IPoint>();
+                List<IPoint> toPoints = new List<IPoint>();
+                lines.ForEach((line) =>
+                {
+                    var nums = line.Split('\t').ToList().Select(numString => Convert.ToDouble(numString)).ToList();
+                    IPoint fromPoint = new PointClass() { X = nums[0], Y = nums[1] };
+                    IPoint toPoint = new PointClass() { X = nums[2], Y = nums[3] };
+                    fromPoints.Add(fromPoint);
+                    toPoints.Add(toPoint);
+                });
+                TransformationMethod.DefineFromControlPoints(fromPoints.ToArray(), toPoints.ToArray(), null, null);
+                #endregion
+            }
         }
+
+        #endregion
+        #region Properties
 
         public string ControlPointsFile { get; set; } = @"C:\test\v2\cps.txt";
         public ControlPointsInputType ControlPointsInputType { get; set; }
+        public SpatialAdjustMethodType SpatialAdjustMethodType { get; set; }
+        public ITransformationMethodGEN TransformationMethod { get; set; }
+
+        #endregion
+        #region Fields
+        public static Dictionary<SpatialAdjustMethodType, Type> transformMethodMap = new Dictionary<SpatialAdjustMethodType, Type>()
+        {
+            { SpatialAdjustMethodType.Affine ,  typeof(AffineTransformationMethodClass) },
+            { SpatialAdjustMethodType.Conformal ,  typeof(ConformalTransformationMethodClass) },
+            { SpatialAdjustMethodType.EdgeSnap ,  typeof(EdgeSnapTransformationMethodClass) },
+            { SpatialAdjustMethodType.Piecewise ,  typeof(PiecewiseTransformationClass) },
+            { SpatialAdjustMethodType.Projective ,  typeof(ProjectiveTransformationMethodClass) }
+        };
+        #endregion
 
         public void AdjustGeometry(IGeometry geometry)
         {
-            Adjust(
-                controlPointsFile: ControlPointsFile,
-                controlPointsInputType: ControlPointsInputType,
-                geometry: geometry
-                );
+            //Adjust(
+            //    controlPointsFile: ControlPointsFile,
+            //    controlPointsInputType: ControlPointsInputType,
+            //    geometry: geometry,
+            //    spatialAdjustMethodType: SpatialAdjustMethodType
+            //    );
+            Adjust(geometry, TransformationMethod);
         }
 
         public static void Adjust()
@@ -53,6 +131,9 @@ namespace AoCli
                 toPoints.Add(toPoint);
             });
             ITransformationMethodGEN transformMethod = new AffineTransformationMethodClass();
+
+
+
             transformMethod.DefineFromControlPoints(fromPoints.ToArray(), toPoints.ToArray(), null, null);
             IPoint testPoint = new PointClass() { X = 14000000, Y = -5300000 };
             Console.WriteLine($"{testPoint.X} , {testPoint.Y}");
@@ -65,8 +146,17 @@ namespace AoCli
             Task.Delay(1000).Wait();
         }
 
-
-        public static void Adjust(string controlPointsFile, ControlPointsInputType controlPointsInputType, IGeometry geometry)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controlPointsFile"></param>
+        /// <param name="controlPointsInputType"></param>
+        /// <param name="geometry"></param>
+        /// <param name="spatialAdjustMethodType"></param>
+        /// <remarks>
+        ///     这个方法日后要被替换，
+        /// </remarks>
+        public static void Adjust(string controlPointsFile, ControlPointsInputType controlPointsInputType, IGeometry geometry, SpatialAdjustMethodType spatialAdjustMethodType)
         {
             switch (controlPointsInputType)
             {
@@ -88,8 +178,13 @@ namespace AoCli
                             fromPoints.Add(fromPoint);
                             toPoints.Add(toPoint);
                         });
-
                         ITransformationMethodGEN transformMethod = new AffineTransformationMethodClass();
+
+                        var a = transformMethodMap[spatialAdjustMethodType];
+                        var constructors = a.GetConstructors();
+                        var constructorIWant = a.GetConstructors().Where(constructor => constructor.GetParameters().Length == 0).FirstOrDefault();
+                        var b = constructorIWant.Invoke(null);
+                        transformMethod = b as ITransformationMethodGEN;
                         transformMethod.DefineFromControlPoints(fromPoints.ToArray(), toPoints.ToArray(), null, null);
                         transformMethod.TransformShape(geometry);
                     }
@@ -104,8 +199,23 @@ namespace AoCli
             }
         }
 
+        public void Adjust(IGeometry geometry, ITransformationMethodGEN transformation)
+        {
+            transformation.TransformShape(geometry);
+        }
+
+        public void Georef()
+        {
+
+            IRasterGeometryProc3 rgp = new RasterGeometryProcClass();
+            //var rgpc = new RasterGeometryProcClass();
+
+        }
     }
 
-
+    public enum SpatialAdjustMethodType
+    {
+        Affine, Conformal, EdgeSnap, Piecewise, Projective
+    }
 
 }
