@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geodatabase;
@@ -23,6 +24,18 @@ namespace AoCli
                 ps.SetProperty(item.Key, item.Value);
             }
             return ps;
+        }
+
+        public static Dictionary<string, object> ToDictionary(this IPropertySet propertySet)
+        {
+            Dictionary<string, object> kvp = new Dictionary<string, object>();
+            var count = propertySet.Count;
+            propertySet.GetAllProperties(out var names, out var vals);
+            for (int i = 0; i < count; i++)
+            {
+                kvp.Add(((string[])names)[i].ToString(), ((object[])vals)[i]);
+            }
+            return kvp;
         }
 
         public static IEnumerable<IDataset> FeatureDatasetsInWorkspace(this IWorkspace workspace, string userFilter)
@@ -113,7 +126,7 @@ namespace AoCli
 
         }
 
-        
+
 
 
     }

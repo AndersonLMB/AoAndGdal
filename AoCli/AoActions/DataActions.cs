@@ -1,21 +1,10 @@
-﻿using ESRI.ArcGIS.Geodatabase;
-using ESRI.ArcGIS.Carto;
-using ESRI.ArcGIS.EditorExt;
-using ESRI.ArcGIS.Geometry;
-using System;
-using System.Linq;
-using System.Collections;
-
-using ESRI.ArcGIS.Editor;
-using ESRI.ArcGIS.ConversionTools;
-using System.Data;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using ESRI.ArcGIS.DataSourcesGDB;
-using System.Diagnostics;
+﻿using ESRI.ArcGIS.DataSourcesGDB;
 using ESRI.ArcGIS.esriSystem;
-using ESRI.ArcGIS.ADF;
+using ESRI.ArcGIS.Geodatabase;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace AoCli.AoActions
 {
@@ -32,7 +21,6 @@ namespace AoCli.AoActions
         /// <param name="toFeatureClass"></param>
         public static void CoverFeatureClassWithFeatureClass(IFeatureClass fromFeatureClass, IFeatureClass toFeatureClass)
         {
-
             CoverFeatureClassWithFeatureClass(fromFeatureClass, toFeatureClass, null);
         }
 
@@ -42,7 +30,9 @@ namespace AoCli.AoActions
             ((ITable)toFeatureClass).DeleteSearchedRows(null);
 
             Console.WriteLine($"{fromFeatureClass.FeatureCount(null)} 个要素待转换");
-            Console.WriteLine($"使用 {spatialAdjust.TransformationMethod.Name} 方法偏移");
+            if (spatialAdjust != null) Console.WriteLine($"使用 {spatialAdjust.TransformationMethod.Name} 方法偏移");
+            else Console.WriteLine("不偏移");
+
             fromFeatureClass.Features().ToList().ForEach((feature) =>
             {
                 var createdFeature = toFeatureClass.CreateFeature();
@@ -96,17 +86,20 @@ namespace AoCli.AoActions
                         return fc;
                     }
                     break;
+
                 case WorkspaceType.Sde:
                     {
                         var fc = GetFeatureInSde(((Dictionary<string, object>)datasource).ToPropertySet(), name);
                         return fc;
                     }
                     break;
+
                 default:
                     break;
             }
             return null;
         }
+
         public static IFeatureClass GetFeatureClass(string gdbPath, string featureClassName)
         {
             FileGDBWorkspaceFactory fileGDBWorkspaceFactory = new FileGDBWorkspaceFactoryClass();
@@ -126,22 +119,47 @@ namespace AoCli.AoActions
                         workspace = sdeWorkspaceFactory.OpenFromFile(datasource, 1);
                     }
                     break;
+
                 case DataSourceType.SdeTxt:
                     throw new NotImplementedException();
                     break;
+
                 case DataSourceType.SdeJson:
                     throw new NotImplementedException();
                     break;
+
                 case DataSourceType.GdbFilePath:
-                    throw new NotImplementedException();
+                    {
+                        FileGDBWorkspaceFactory fileGDBWorkspaceFactory = new FileGDBWorkspaceFactoryClass();
+                        workspace = fileGDBWorkspaceFactory.OpenFromFile(datasource, 1);
+                    }
+                    //throw new NotImplementedException();
                     break;
+
                 case DataSourceType.ShapefilePath:
                     throw new NotImplementedException();
                     break;
+
                 default:
                     break;
             }
-            return ((IFeatureWorkspace)workspace).OpenFeatureClass(featureClassName);
+
+            var featureWorkspace = (IFeatureWorkspace)workspace;
+
+
+            IFeatureClass tryOpenFeatureClass;
+            try
+            {
+                tryOpenFeatureClass = featureWorkspace.OpenFeatureClass(featureClassName);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            //((IFeatureWorkspace)workspace).CreateFeatureClass()
+
+            return featureWorkspace.OpenFeatureClass(featureClassName);
         }
 
         public static IFeatureClass GetFeatureInSde(IPropertySet properties, string featureClassName)
@@ -152,14 +170,10 @@ namespace AoCli.AoActions
             return fc;
         }
 
-
         public static IFeatureClass CreateFeatueClass(object datasource, WorkspaceType workspace, string name)
         {
             throw new NotImplementedException();
         }
-
-
-
 
         public static IFeatureClass CreateFeatureClass(IWorkspace workspace, string datasetname, string name)
         {
@@ -168,15 +182,21 @@ namespace AoCli.AoActions
             var dataset = featureWorkspace.OpenFeatureDataset(datasetname);
             //dataset.CreateFeatureClass(name, )
             throw new NotImplementedException();
-
-
         }
 
+        public static IFeatureClass CreateFeatureClass(IWorkspace workspace, string datasetname, string name ,IFeatureClass refFeatureClass)
+        {
+            IFeatureWorkspace featureWorkspace = (IFeatureWorkspace)workspace;
+
+            //workspace.ConnectionProperties.get
+            //Dictionary<string, object> dso;dso.top
 
 
+            var dataset = featureWorkspace.OpenFeatureDataset(datasetname);
+            //dataset.CreateFeatureClass(name, )
+            throw new NotImplementedException();
+        }
     }
-
-
 
     public enum WorkspaceType
     {

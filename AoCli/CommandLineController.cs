@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using AoCli.AoActions;
 using McMaster.Extensions.CommandLineUtils;
-using AoCli.AoActions;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.IO;
 
 namespace AoCli
 {
@@ -47,6 +46,7 @@ namespace AoCli
         /// </summary>
         [Option(ShortName = "dst", Description = "Data source type. <SdeFilePath|SdeTxt|SdeJson|GdbFilePath|ShapefilePath>")]
         public DataSourceType DataSourceType { get; set; }
+
         /// <summary>
         /// 图层名称
         /// </summary>
@@ -55,6 +55,7 @@ namespace AoCli
 
         [Option(ShortName = "ods", Description = "Output Data source of Layer")]
         public string OutDatasource { get; set; }
+
         [Option(ShortName = "odst", Description = "Output Data source type. <SdeFilePath|SdeTxt|SdeJson|GdbFilePath|ShapefilePath>")]
         public DataSourceType OutDatasourceType { get; set; }
 
@@ -91,14 +92,20 @@ namespace AoCli
                         }
                         catch (Exception ex)
                         {
-                            if (ex is FileNotFoundException)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
                             sa = null;
                         }
                         var inFc = DataActions.GetFeatureClass(Datasource, DataSourceType, LayerName);
-                        var outFc = DataActions.GetFeatureClass(OutDatasource, OutDatasourceType, OutLayerName);
+                        ESRI.ArcGIS.Geodatabase.IFeatureClass outFc;
+                        try
+                        {
+                            outFc = DataActions.GetFeatureClass(OutDatasource, OutDatasourceType, OutLayerName);
+                        }
+                        catch (Exception)
+                        {
+                            //DataActions.CreateFeatureClass
+                            throw;
+                        }
+
                         //Console.WriteLine($"将使用{ SpatialAdjust.transformMethodMap[sa.SpatialAdjustMethodType].Name} 偏移");
                         DataActions.CoverFeatureClassWithFeatureClass(inFc, outFc, sa);
                         break;
@@ -110,6 +117,7 @@ namespace AoCli
                         LogActions.LogFeatureClass(Datasource, DataSourceType, LayerName);
                     }
                     break;
+
                 default:
                     break;
             }

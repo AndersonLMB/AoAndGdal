@@ -1,32 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ESRI.ArcGIS.Geometry;
-using ESRI.ArcGIS.DataSourcesGDB;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using AoCli;
+﻿using AoCli.AoActions;
+using ESRI.ArcGIS.DataSourcesRaster;
+using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geodatabase;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Diagnostics;
-using AoCli.AoActions;
 
 namespace AoCli.Test
 {
-
     [TestClass]
     public class MyTestClass
     {
         [TestMethod]
         public void MyTestMethod()
         {
-
             //AoCli.Program.BindLicense();
 
             //AoCli.Program.Main(null);
             //new ArcEngineLicense();
         }
-
 
         [TestMethod]
         public void TestReadGdeFeatureClass()
@@ -39,7 +31,6 @@ namespace AoCli.Test
             var fc = DataActions.GetFeatureClass(@"C:\OCNwork\东莞\20181022\YDYZT (WGS84)\WGS84.gdb", WorkspaceType.Gdb, "城际轨道站点");
             Trace.WriteLine(fc.FeatureCount(null));
         }
-
 
         [TestMethod]
         public void AdjustTest()
@@ -56,5 +47,29 @@ namespace AoCli.Test
             LogActions.LogFeatureClass(fc);
         }
 
+        [TestMethod]
+        public void PropertySetToDictionaryTest()
+        {
+            new ArcEngineLicense();
+            IPropertySet ps = new PropertySetClass();
+            ps.SetProperty("a", "b");
+            ps.SetProperty("as", "bs");
+            var dic = ps.ToDictionary();
+        }
+
+        [STAThread]
+        [TestMethod]
+        public void RasterReadTest()
+        {
+            new ArcEngineLicense();
+            //new SpatialAdjust().Georef();
+
+            IRasterDataset rasterDataset = new RasterDatasetClass();
+
+            rasterDataset.OpenFromFile(@"C:\test\v2\wsiearth.tif");
+            //rasterDataset.Format;
+            var format = rasterDataset.Format;
+            Trace.WriteLine(format);
+        }
     }
 }

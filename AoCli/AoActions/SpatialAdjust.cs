@@ -1,14 +1,12 @@
 ﻿using ESRI.ArcGIS.EditorExt;
 using ESRI.ArcGIS.Geometry;
 using System;
-using System.Linq;
-using System.Data;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
-using System.Threading.Tasks;
-using ESRI.ArcGIS.DataSourcesRaster;
+using System.Linq;
 using System.Net;
-
+using System.Threading.Tasks;
 namespace AoCli
 {
     public class SpatialAdjust
@@ -30,10 +28,11 @@ namespace AoCli
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
-                        //throw new FileNotFoundException();
+                        Console.WriteLine("找不到控制点文件");
+                        throw ex;
                     }
                     break;
+
                 case ControlPointsInputType.Web:
                     try
                     {
@@ -41,10 +40,11 @@ namespace AoCli
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
-                        //throw;
+                        Console.WriteLine("找不到控制点文件");
+                        throw ex;
                     }
                     break;
+
                 default:
                     break;
             }
@@ -60,7 +60,9 @@ namespace AoCli
                     .FirstOrDefault()
                     .Invoke(null);
                 TransformationMethod = (ITransformationMethodGEN)methodObject;
+
                 #region 定义控制点
+
                 var lines = txt.Split('\n').ToList();
                 if (String.IsNullOrWhiteSpace(lines.Last()) || String.IsNullOrEmpty(lines.Last()))
                 {
@@ -77,11 +79,17 @@ namespace AoCli
                     toPoints.Add(toPoint);
                 });
                 TransformationMethod.DefineFromControlPoints(fromPoints.ToArray(), toPoints.ToArray(), null, null);
-                #endregion
+
+                #endregion 定义控制点
             }
         }
 
-        #endregion
+        public SpatialAdjust()
+        {
+        }
+
+        #endregion Constructors
+
         #region Properties
 
         public string ControlPointsFile { get; set; } = @"C:\test\v2\cps.txt";
@@ -89,8 +97,10 @@ namespace AoCli
         public SpatialAdjustMethodType SpatialAdjustMethodType { get; set; }
         public ITransformationMethodGEN TransformationMethod { get; set; }
 
-        #endregion
+        #endregion Properties
+
         #region Fields
+
         public static Dictionary<SpatialAdjustMethodType, Type> transformMethodMap = new Dictionary<SpatialAdjustMethodType, Type>()
         {
             { SpatialAdjustMethodType.Affine ,  typeof(AffineTransformationMethodClass) },
@@ -99,7 +109,8 @@ namespace AoCli
             { SpatialAdjustMethodType.Piecewise ,  typeof(PiecewiseTransformationClass) },
             { SpatialAdjustMethodType.Projective ,  typeof(ProjectiveTransformationMethodClass) }
         };
-        #endregion
+
+        #endregion Fields
 
         public void AdjustGeometry(IGeometry geometry)
         {
@@ -132,8 +143,6 @@ namespace AoCli
             });
             ITransformationMethodGEN transformMethod = new AffineTransformationMethodClass();
 
-
-
             transformMethod.DefineFromControlPoints(fromPoints.ToArray(), toPoints.ToArray(), null, null);
             IPoint testPoint = new PointClass() { X = 14000000, Y = -5300000 };
             Console.WriteLine($"{testPoint.X} , {testPoint.Y}");
@@ -141,13 +150,12 @@ namespace AoCli
             transformMethod.TransformShape(testPoint);
             Task.Delay(1000).Wait();
 
-
             Console.WriteLine($"{testPoint.X} , {testPoint.Y}");
             Task.Delay(1000).Wait();
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="controlPointsFile"></param>
         /// <param name="controlPointsInputType"></param>
@@ -189,10 +197,12 @@ namespace AoCli
                         transformMethod.TransformShape(geometry);
                     }
                     break;
+
                 case ControlPointsInputType.Web:
 
                     throw new NotImplementedException();
                     break;
+
                 default:
                     throw new NotImplementedException();
                     break;
@@ -206,10 +216,7 @@ namespace AoCli
 
         public void Georef()
         {
-
-            IRasterGeometryProc3 rgp = new RasterGeometryProcClass();
-            //var rgpc = new RasterGeometryProcClass();
-
+            //IRasterGeometryProc3 rgpc = new RasterGeometryProcClass();
         }
     }
 
@@ -217,5 +224,4 @@ namespace AoCli
     {
         Affine, Conformal, EdgeSnap, Piecewise, Projective
     }
-
 }

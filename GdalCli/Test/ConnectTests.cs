@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 using OSGeo.OGR;
-using OSGeo.OSR;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -117,7 +115,6 @@ namespace GdalCli.Test
         [TestMethod]
         public void OracleTestMetodh()
         {
-
             string balabala(string a)
             {
                 return a;
@@ -159,7 +156,6 @@ namespace GdalCli.Test
         [TestMethod]
         public void LayerCsvTest()
         {
-
             Trace.WriteLine(Uri.HexEscape(','));
             var urus = Uri.EscapeDataString("ad,asd");
             Trace.WriteLine(urus);
@@ -172,8 +168,6 @@ namespace GdalCli.Test
             Trace.WriteLine(csv);
         }
 
-
-
         [TestMethod]
         public void CreateShpTest()
         {
@@ -182,19 +176,14 @@ namespace GdalCli.Test
 
             var shpDatasource = shpDriver.CreateDataSource(@"C:\test\shpCreatedByGdal.shp", null);
 
-
             //shpDatasource.GetLayerByIndex(0).feat
-
-
         }
-
 
         [TestMethod]
         public void TdtToShapefile()
         {
             Program.TdtApiToShapefile("佛山市", @"C:\test\dz.shp", "6c13494a3e9ed596149030705b37fd6c");
         }
-
 
         [TestMethod]
         public void FromResponseStringTest()
@@ -206,16 +195,11 @@ namespace GdalCli.Test
 
             //var obj = JsonConvert.DeserializeObject<AdministrativeResponseObject>(responseString);
             //obj.data[0].child.for
-            
-
-
 
             //Trace.WriteLine(responseString);
             //var responseText =       new FileStream(   )
 
-
             //Program.FromResponseString(                 )
         }
-
     }
 }
