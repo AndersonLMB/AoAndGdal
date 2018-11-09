@@ -9,6 +9,10 @@ using System.Net;
 using System.Threading.Tasks;
 namespace AoCli
 {
+
+    /// <summary>
+    /// 矢量偏移类
+    /// </summary>
     public class SpatialAdjust
     {
         #region Constructors
@@ -93,8 +97,17 @@ namespace AoCli
         #region Properties
 
         public string ControlPointsFile { get; set; } = @"C:\test\v2\cps.txt";
+        /// <summary>
+        /// 控制点的输入类型
+        /// </summary>
         public ControlPointsInputType ControlPointsInputType { get; set; }
+        /// <summary>
+        /// 矢量偏移的方法类型
+        /// </summary>
         public SpatialAdjustMethodType SpatialAdjustMethodType { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         public ITransformationMethodGEN TransformationMethod { get; set; }
 
         #endregion Properties
@@ -220,6 +233,9 @@ namespace AoCli
         }
     }
 
+    /// <summary>
+    /// 矢量数据偏移的方法
+    /// </summary>
     public enum SpatialAdjustMethodType
     {
         Affine, Conformal, EdgeSnap, Piecewise, Projective

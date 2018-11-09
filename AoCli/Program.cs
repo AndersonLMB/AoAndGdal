@@ -16,7 +16,7 @@ namespace AoCli
             //CommandLineApplication.Execute<Program>(args);
             CommandLineApplication.Execute<CommandLineController>(args);
             //new ArcEngineLicense();
-            //Console.ReadLine();
+            Console.ReadLine();
         }
 
         public static void BindLicense()

@@ -1,4 +1,5 @@
 ﻿using AoCli.AoActions;
+using ESRI.ArcGIS.Geodatabase;
 using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
@@ -102,10 +103,8 @@ namespace AoCli
                         }
                         catch (Exception)
                         {
-                            //DataActions.CreateFeatureClass
-                            throw;
+                            outFc = DataActions.CreateFeatureClass(DataActions.GetWorkspace(OutDatasource, OutDatasourceType), "", OutLayerName, inFc);
                         }
-
                         //Console.WriteLine($"将使用{ SpatialAdjust.transformMethodMap[sa.SpatialAdjustMethodType].Name} 偏移");
                         DataActions.CoverFeatureClassWithFeatureClass(inFc, outFc, sa);
                         break;
@@ -117,7 +116,53 @@ namespace AoCli
                         LogActions.LogFeatureClass(Datasource, DataSourceType, LayerName);
                     }
                     break;
+                case ActionTypes.BatchImport:
+                    new ArcEngineLicense();
+                    var layerNames = LayerName.Split(',');
 
+                    List<string> finalNameStringList = new List<string>();
+                    var workspace = DataActions.GetWorkspace(Datasource, DataSourceType);
+                    var featureWorkspace = (IFeatureWorkspace)workspace;
+                    layerNames.ToList().ForEach((name) =>
+                    {
+                        try
+                        {
+                            featureWorkspace.OpenFeatureClass(name);
+                            finalNameStringList.Add(name);
+                        }
+                        catch (Exception)
+                        {
+                            try
+                            {
+                                var dataset = featureWorkspace.OpenFeatureDataset(name);
+                                var subs = dataset.FeatureDatasetsInFeatureDataset();
+                                subs.ToList().ForEach(sub => finalNameStringList.Add(sub.Name));
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+                    });
+                    finalNameStringList.ForEach((finalName) =>
+                    {
+                        new CommandLineController()
+                        {
+                            ActionArgument = ActionTypes.ImportData,
+                            Datasource = Datasource,
+                            DataSourceType = DataSourceType,
+                            LayerName = finalName,
+                            OutDatasource = OutDatasource,
+                            OutDatasourceType = OutDatasourceType,
+                            OutLayerName = $"{finalName.Split('.').Last()}_adjusted",
+                            ControlPoints = ControlPoints,
+                            ControlPointsInputType = ControlPointsInputType,
+                            SpatialAdjustMethodType = SpatialAdjustMethodType
+                        }.OnExecute();
+                    });
+
+
+
+                    break;
                 default:
                     break;
             }
@@ -131,6 +176,6 @@ namespace AoCli
 
     public enum ActionTypes
     {
-        Adjust, ImportData, LogLayer
+        Adjust, ImportData, LogLayer, BatchImport
     }
 }

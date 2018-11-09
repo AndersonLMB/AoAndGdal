@@ -2,6 +2,7 @@
 using ESRI.ArcGIS.DataSourcesRaster;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geodatabase;
+using ESRI.ArcGIS.Geometry;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
@@ -14,6 +15,11 @@ namespace AoCli.Test
         [TestMethod]
         public void MyTestMethod()
         {
+            new ArcEngineLicense();
+            new ArcEngineLicense();
+            new ArcEngineLicense();
+            new ArcEngineLicense();
+            new PointClass();
             //AoCli.Program.BindLicense();
 
             //AoCli.Program.Main(null);
