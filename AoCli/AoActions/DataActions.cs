@@ -37,12 +37,13 @@ namespace AoCli.AoActions
             Console.WriteLine($"{fromFeatureClass.FeatureCount(null)} 个要素待转换 在{((IDataset)fromFeatureClass).Name}");
             if (spatialAdjust != null) Console.WriteLine($"使用 {spatialAdjust.TransformationMethod.Name} 方法偏移");
             else Console.WriteLine("不偏移");
-
-
-
-
             Action<IFeature> action = (feature) =>
                {
+
+               //esriFlowDirection.
+
+                   //UInt32.MaxValue
+                   //4294967295
                    var createdFeature = toFeatureClass.CreateFeature();
                    var copy = feature.ShapeCopy;
                    if (spatialAdjust != null && feature.Shape!=null)
@@ -51,7 +52,6 @@ namespace AoCli.AoActions
                        var targetSr = createdFeature.Shape.SpatialReference;
                        try
                        {
-
                            copy.Project(targetSr);
                        }
                        catch (Exception ex)
@@ -82,7 +82,7 @@ namespace AoCli.AoActions
                    }
                    createdFeature.Store();
                    finishedCount++;
-                   var progress = ((double)finishedCount) / ((double)count);
+                   double progress = ((double)finishedCount) / ((double)count);
                    progressDictionary.ToList().ForEach((kvp) =>
                    {
                        if (progress > kvp.Key && kvp.Value == false)
@@ -96,7 +96,7 @@ namespace AoCli.AoActions
 
             IFeatureCursor featureCursor = fromFeatureClass.Update(null, false);
             IFeature targetFeature;
-            while (((targetFeature = featureCursor.NextFeature()) != null))
+            while ((targetFeature = featureCursor.NextFeature()) != null)
             {
                 action.Invoke(targetFeature);
             }
@@ -111,8 +111,6 @@ namespace AoCli.AoActions
 
             //fromFeatureClass.Features().ToList().ForEach(action);
             Console.Write("\n");
-
-
             Console.WriteLine($"{toFeatureClass.FeatureCount(null)} 个要素在目标图层 在{((IDataset)toFeatureClass).Name}");
         }
 

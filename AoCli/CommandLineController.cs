@@ -76,7 +76,6 @@ namespace AoCli
                         SpatialAdjust.Adjust();
                         break;
                     }
-
                 case ActionTypes.ImportData:
                     {
                         if (new string[] { Datasource, LayerName, OutDatasource, OutLayerName, ControlPoints }.Any(s => s == null))
@@ -109,7 +108,6 @@ namespace AoCli
                         DataActions.CoverFeatureClassWithFeatureClass(inFc, outFc, sa);
                         break;
                     }
-
                 case ActionTypes.LogLayer:
                     {
                         new ArcEngineLicense();
@@ -119,7 +117,6 @@ namespace AoCli
                 case ActionTypes.BatchImport:
                     new ArcEngineLicense();
                     var layerNames = LayerName.Split(',');
-
                     List<string> finalNameStringList = new List<string>();
                     var workspace = DataActions.GetWorkspace(Datasource, DataSourceType);
                     var featureWorkspace = (IFeatureWorkspace)workspace;
