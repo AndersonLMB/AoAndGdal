@@ -49,6 +49,7 @@ namespace ReadShp
 
     public class ShpFile
     {
+        public int[] RecordPositions { get; private set; } = new int[0];
         private const int recordsStartIndex = 100;
         public string Filepath { get; private set; }
         public ShpFile(string filepath)
@@ -61,36 +62,60 @@ namespace ReadShp
             return new ShpFile(filepath);
         }
 
-        public int GetCount()
+        public int GetCount2()
         {
             var bytes = File.ReadAllBytes(Filepath);
             var fileLength = bytes.Length;
-
-            //FileStream fs = new FileStream(Filepath, FileMode.Open);
-            //StreamReader streamReader = new StreamReader(fs);
-            //streamReader.rea
-
             int count = 0;
             int cursor = recordsStartIndex;
             while (cursor < fileLength)
             {
-                //var thisContentLength =           
                 var bytesOfLength = new ArraySegment<byte>(bytes, cursor + 4, 4).Reverse().ToArray();
                 var contentLength = BitConverter.ToInt32(bytesOfLength, 0) * 2;
                 cursor += contentLength + 8;
                 count++;
             }
-
-
             return count;
-
-
-
-            //throw new NotImplementedException();
+        }
+        public int GetCount()
+        {
+            int count = 0;
+            using (var fileStream = new FileStream(Filepath, FileMode.Open))
+            {
+                var holeFileLength = fileStream.Length;
+                int cursor = recordsStartIndex;
+                fileStream.Position = 0;
+                while (cursor < holeFileLength)
+                {
+                    fileStream.Position = cursor + 4;
+                    byte[] bytesOfCurrentLenght = new byte[4];
+                    fileStream.Read(bytesOfCurrentLenght, 0, 4);
+                    var bytesOfLength = BitConverter.ToInt32(bytesOfCurrentLenght.Reverse().ToArray(), 0) * 2;
+                    cursor += bytesOfLength + 8;
+                    count++;
+                }
+            }
+            return count;
         }
 
-
-
+        public IEnumerable<int> GetRecordPositions()
+        {
+            using (var fileStream = new FileStream(Filepath, FileMode.Open))
+            {
+                var holeFileLength = fileStream.Length;
+                int cursor = recordsStartIndex;
+                fileStream.Position = 0;
+                while (cursor < holeFileLength)
+                {
+                    fileStream.Position = cursor + 4;
+                    byte[] bytesOfCurrentLenght = new byte[4];
+                    fileStream.Read(bytesOfCurrentLenght, 0, 4);
+                    var bytesOfLength = BitConverter.ToInt32(bytesOfCurrentLenght.Reverse().ToArray(), 0) * 2;
+                    cursor += bytesOfLength + 8;
+                    yield return cursor;
+                }
+            }
+        }
     }
 
     public static class Utils
@@ -113,11 +138,50 @@ namespace ReadShp
         }
 
         [TestMethod]
-        public void ShapefileReadRecords()
+        public void ShapefileReadRecordsCount()
         {
-            var shp = new ShpFile(@"C:\test\KG_YD_DY_STATIC.shp");
+            var shp = new ShpFile(@"C:\test\continents.shp");
             var count = shp.GetCount();
             Trace.WriteLine(count);
+
+            //var positions = shp.GetRecordPositions();
+            
+        }
+        //public void ShapefileReadRecordsCount2()
+        //{
+        //    var shp = new ShpFile(@"C:\test\continents.shp");
+        //    var count2 = shp.GetCount2();
+        //    Trace.WriteLine(count2);
+        //}
+
+        [TestMethod]
+        public void FSReaderTest()
+        {
+            Stream s = new MemoryStream();
+            for (int i = 0; i < 122; i++)
+            {
+                s.WriteByte((byte)i);
+            }
+            s.Position = 0;
+
+            // Now read s into a byte buffer with a little padding.
+            byte[] bytes = new byte[s.Length + 10];
+            int numBytesToRead = (int)s.Length;
+            int numBytesRead = 0;
+            do
+            {
+                // Read may return anything from 0 to 10.
+                int n = s.Read(bytes, numBytesRead, 10);
+                numBytesRead += n;
+                numBytesToRead -= n;
+            } while (numBytesToRead > 0);
+            s.Close();
+
+            Console.WriteLine("number of bytes read: {0:d}", numBytesRead);
+
+
+            //fs.Position = 0;
+
         }
 
 
