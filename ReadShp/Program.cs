@@ -61,44 +61,12 @@ namespace ReadShp
         {
             return new ShpFile(filepath);
         }
-
-        public int GetCount2()
-        {
-            var bytes = File.ReadAllBytes(Filepath);
-            var fileLength = bytes.Length;
-            int count = 0;
-            int cursor = recordsStartIndex;
-            while (cursor < fileLength)
-            {
-                var bytesOfLength = new ArraySegment<byte>(bytes, cursor + 4, 4).Reverse().ToArray();
-                var contentLength = BitConverter.ToInt32(bytesOfLength, 0) * 2;
-                cursor += contentLength + 8;
-                count++;
-            }
-            return count;
-        }
         public int GetCount()
         {
-            int count = 0;
-            using (var fileStream = new FileStream(Filepath, FileMode.Open))
-            {
-                var holeFileLength = fileStream.Length;
-                int cursor = recordsStartIndex;
-                fileStream.Position = 0;
-                while (cursor < holeFileLength)
-                {
-                    fileStream.Position = cursor + 4;
-                    byte[] bytesOfCurrentLenght = new byte[4];
-                    fileStream.Read(bytesOfCurrentLenght, 0, 4);
-                    var bytesOfLength = BitConverter.ToInt32(bytesOfCurrentLenght.Reverse().ToArray(), 0) * 2;
-                    cursor += bytesOfLength + 8;
-                    count++;
-                }
-            }
-            return count;
+            var recordPositions = GetRecordPositions();
+            return recordPositions.Count();
         }
-
-        public IEnumerable<int> GetRecordPositions()
+        private IEnumerable<int> GetRecordPositions()
         {
             using (var fileStream = new FileStream(Filepath, FileMode.Open))
             {
@@ -115,6 +83,45 @@ namespace ReadShp
                     yield return cursor;
                 }
             }
+        }
+        public string GetFeatureString(int index)
+        {
+            var recordPositions = GetRecordPositions();
+            var recordPosition = recordPositions.ToArray()[index];
+
+            using (var fs = new FileStream(this.Filepath, FileMode.Open))
+            {
+                var bytesOfContentLength = new byte[4];
+                fs.Position = recordPosition + 4;
+                fs.Read(bytesOfContentLength, 0, 4);
+                var contentLength = BitConverter.ToInt32(bytesOfContentLength.Reverse().ToArray(), 0) * 2;
+                fs.Position += 4;
+                var bytesOfContent = new byte[contentLength];
+                fs.Read(bytesOfContent, 0, contentLength);
+                var contentString = Encoding.UTF8.GetString(bytesOfContent);
+            }
+
+
+
+            return null;
+
+            //throw new NotImplementedException();
+        }
+
+        public int GetFeatureType(int index)
+        {
+            var recordPositions = GetRecordPositions();
+            var recordPosition = recordPositions.ToArray()[index];
+            var bytesOfFeatureType = new byte[4];
+            int stringOfFeatureType;
+            using (var fs = new FileStream(this.Filepath, FileMode.Open))
+            {
+                fs.Position = recordPosition + 8;
+                fs.Read(bytesOfFeatureType, 0, 4);
+                stringOfFeatureType = BitConverter.ToInt32(bytesOfFeatureType, 0);
+            }
+            return stringOfFeatureType;
+            //throw new NotImplementedException();
         }
     }
 
@@ -143,16 +150,11 @@ namespace ReadShp
             var shp = new ShpFile(@"C:\test\continents.shp");
             var count = shp.GetCount();
             Trace.WriteLine(count);
-
+            var featureString = shp.GetFeatureString(2);
+            var featureType = shp.GetFeatureType(2);
             //var positions = shp.GetRecordPositions();
-            
+
         }
-        //public void ShapefileReadRecordsCount2()
-        //{
-        //    var shp = new ShpFile(@"C:\test\continents.shp");
-        //    var count2 = shp.GetCount2();
-        //    Trace.WriteLine(count2);
-        //}
 
         [TestMethod]
         public void FSReaderTest()
@@ -163,7 +165,7 @@ namespace ReadShp
                 s.WriteByte((byte)i);
             }
             s.Position = 0;
-
+      
             // Now read s into a byte buffer with a little padding.
             byte[] bytes = new byte[s.Length + 10];
             int numBytesToRead = (int)s.Length;
