@@ -3,7 +3,9 @@ using ESRI.ArcGIS.Geodatabase;
 using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace AoCli
 {
@@ -33,9 +35,6 @@ namespace AoCli
         [Option(ShortName = "samt", Description = "Spatial adjustment method type. Default option is Affine. <Affine|Conformal|EdgeSnap|Piecewise|Projective>")]
         public SpatialAdjustMethodType SpatialAdjustMethodType { get; set; } = SpatialAdjustMethodType.Affine;
 
-        [Option(ShortName = "f", Description = "The file to operate")]
-        public string File { get; set; }
-
         /// <summary>
         /// 图层的数据源
         /// </summary>
@@ -63,6 +62,8 @@ namespace AoCli
         [Option(ShortName = "oln", Description = "Output Layer name")]
         public string OutLayerName { get; set; }
 
+        [Option(ShortName = "bfn", Description = "Batch file name")]
+        public string BatchFileName { get; set; }
         /// <summary>
         /// 数据源图层名
         /// </summary>
@@ -115,50 +116,111 @@ namespace AoCli
                     }
                     break;
                 case ActionTypes.BatchImport:
-                    new ArcEngineLicense();
-                    var layerNames = LayerName.Split(',');
-                    List<string> finalNameStringList = new List<string>();
-                    var workspace = DataActions.GetWorkspace(Datasource, DataSourceType);
-                    var featureWorkspace = (IFeatureWorkspace)workspace;
-                    layerNames.ToList().ForEach((name) =>
                     {
-                        try
-                        {
-                            featureWorkspace.OpenFeatureClass(name);
-                            finalNameStringList.Add(name);
-                        }
-                        catch (Exception)
+                        new ArcEngineLicense();
+                        var layerNames = LayerName.Split(',');
+                        List<string> finalNameStringList = new List<string>();
+                        var workspace = DataActions.GetWorkspace(Datasource, DataSourceType);
+                        var featureWorkspace = (IFeatureWorkspace)workspace;
+                        layerNames.ToList().ForEach((name) =>
                         {
                             try
                             {
-                                var dataset = featureWorkspace.OpenFeatureDataset(name);
-                                var subs = dataset.FeatureDatasetsInFeatureDataset();
-                                subs.ToList().ForEach(sub => finalNameStringList.Add(sub.Name));
+                                featureWorkspace.OpenFeatureClass(name);
+                                finalNameStringList.Add(name);
                             }
                             catch (Exception)
                             {
+                                try
+                                {
+                                    var dataset = featureWorkspace.OpenFeatureDataset(name);
+                                    var subs = dataset.FeatureDatasetsInFeatureDataset();
+                                    subs.ToList().ForEach(sub => finalNameStringList.Add(sub.Name));
+                                }
+                                catch (Exception)
+                                {
+                                }
                             }
-                        }
-                    });
-                    finalNameStringList.ForEach((finalName) =>
-                    {
-                        new CommandLineController()
+                        });
+                        finalNameStringList.ForEach((finalName) =>
                         {
-                            ActionArgument = ActionTypes.ImportData,
-                            Datasource = Datasource,
-                            DataSourceType = DataSourceType,
-                            LayerName = finalName,
-                            OutDatasource = OutDatasource,
-                            OutDatasourceType = OutDatasourceType,
-                            OutLayerName = $"{finalName.Split('.').Last()}_adjusted",
-                            ControlPoints = ControlPoints,
-                            ControlPointsInputType = ControlPointsInputType,
-                            SpatialAdjustMethodType = SpatialAdjustMethodType
-                        }.OnExecute();
-                    });
+                            new CommandLineController()
+                            {
+                                ActionArgument = ActionTypes.ImportData,
+                                Datasource = Datasource,
+                                DataSourceType = DataSourceType,
+                                LayerName = finalName,
+                                OutDatasource = OutDatasource,
+                                OutDatasourceType = OutDatasourceType,
+                                OutLayerName = $"{finalName.Split('.').Last()}_adjusted",
+                                ControlPoints = ControlPoints,
+                                ControlPointsInputType = ControlPointsInputType,
+                                SpatialAdjustMethodType = SpatialAdjustMethodType
+                            }.OnExecute();
+                        });
+                    }
+                    break;
+                case ActionTypes.GenerateBatch:
+                    {
+                        new ArcEngineLicense();
+                        var batchFileName = String.Empty;
+                        //var dtn = DateTime.Now.ToFullTimeSecondString();
+                        if (String.IsNullOrEmpty(BatchFileName))
+                        {
+                            var dtn = DateTime.Now;
+                            var s = dtn.ToBinary();
+                            batchFileName = $"bat{s}.bat";
+                        }
+                        else
+                        {
+                            batchFileName = BatchFileName;
+                        }
+                        var layerNames = LayerName.Split(',');
+                        List<string> finalNameStringList = new List<string>();
+                        var workspace = DataActions.GetWorkspace(Datasource, DataSourceType);
+                        var featureWorkspace = (IFeatureWorkspace)workspace;
+                        layerNames.ToList().ForEach((name) =>
+                        {
+                            try
+                            {
+                                featureWorkspace.OpenFeatureClass(name);
+                                finalNameStringList.Add(name);
+                            }
+                            catch (Exception)
+                            {
+                                try
+                                {
+                                    var dataset = featureWorkspace.OpenFeatureDataset(name);
+                                    var subs = dataset.FeatureDatasetsInFeatureDataset();
+                                    subs.ToList().ForEach(sub => finalNameStringList.Add(sub.Name));
+                                }
+                                catch (Exception)
+                                {
+                                }
+                            }
+                        });
 
 
+                        using (StreamWriter sw = new StreamWriter(batchFileName, true, Encoding.Default))
+                        //using (StreamWriter sw = File.AppendText(batchFileName))
+                        {
+                            var text = String.Empty;
 
+                            finalNameStringList.ToList().ForEach((layerName) =>
+                            {
+                                //System.Reflection.Assembly.GetExecutingAssembly().FullName;
+                                //sw.WriteLine( $"AoCli.exe "  )
+                                sw.WriteLine($@"AoCli.exe BatchImport -ln {layerName} -ds {Datasource} -dst {DataSourceType} -ods {OutDatasource} -odst {OutDatasourceType} -oln {OutLayerName} -cp {ControlPoints} -samt {SpatialAdjustMethodType}" + " \n");
+                                //text += $@"AoCli.exe BatchImport -ln {layerName} -ds {Datasource} -dst {DataSourceType} -ods {OutDatasource} -oln {OutLayerName} -cp {ControlPoints} -samt {SpatialAdjustMethodType}";
+                                //text += "\n";
+                            });
+                            sw.Write(text);
+
+
+                            Console.WriteLine("Batch file generated");
+                        }
+
+                    }
                     break;
                 default:
                     break;
@@ -173,6 +235,6 @@ namespace AoCli
 
     public enum ActionTypes
     {
-        Adjust, ImportData, LogLayer, BatchImport
+        Adjust, ImportData, LogLayer, BatchImport, GenerateBatch
     }
 }

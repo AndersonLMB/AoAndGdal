@@ -1,6 +1,7 @@
 ﻿using ESRI.ArcGIS;
 using McMaster.Extensions.CommandLineUtils;
 using System;
+using System.Threading.Tasks;
 
 namespace AoCli
 {
@@ -16,7 +17,11 @@ namespace AoCli
             //CommandLineApplication.Execute<Program>(args);
             CommandLineApplication.Execute<CommandLineController>(args);
             //new ArcEngineLicense();
-            Console.ReadLine();
+
+            //Console.ReadLine();
+            Console.WriteLine("5秒后结束");
+            Task.Delay(5000).Wait();
+
         }
 
         public static void BindLicense()
