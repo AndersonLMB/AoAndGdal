@@ -40,13 +40,13 @@ namespace AoCli.AoActions
             Action<IFeature> action = (feature) =>
                {
 
-               //esriFlowDirection.
+                   //esriFlowDirection.
 
                    //UInt32.MaxValue
                    //4294967295
                    var createdFeature = toFeatureClass.CreateFeature();
                    var copy = feature.ShapeCopy;
-                   if (spatialAdjust != null && feature.Shape!=null)
+                   if (spatialAdjust != null && feature.Shape != null)
                    {
                        //Console.WriteLine($"使用{ SpatialAdjust.transformMethodMap[spatialAdjust.SpatialAdjustMethodType].Name}来Spatial Adjustment");
                        var targetSr = createdFeature.Shape.SpatialReference;
@@ -277,6 +277,15 @@ namespace AoCli.AoActions
                     return null;
                     break;
             }
+        }
+
+        public static IWorkspace GetSdeWorkspace(object psObj)
+        {
+            var dic = (Dictionary<string, object>)psObj;
+            var ps = dic.ToPropertySet();
+            SdeWorkspaceFactory wf = new SdeWorkspaceFactoryClass();
+            var ws = wf.Open(ps, 0);
+            return ws;
         }
         /// <summary>
         /// 检查FeatureClass是否存在

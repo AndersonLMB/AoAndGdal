@@ -222,6 +222,13 @@ namespace AoCli
 
                     }
                     break;
+
+                case ActionTypes.GPTest:
+                    {
+                        new Test.MyTestClass().ShapeInWhereTest3();
+                    }
+                    break;
+
                 default:
                     break;
             }
@@ -233,8 +240,11 @@ namespace AoCli
         File, Web
     }
 
+    /// <summary>
+    /// 指令的类型
+    /// </summary>
     public enum ActionTypes
     {
-        Adjust, ImportData, LogLayer, BatchImport, GenerateBatch
+        Adjust, ImportData, LogLayer, BatchImport, GenerateBatch, GPTest
     }
 }
